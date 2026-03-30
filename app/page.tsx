@@ -1,65 +1,79 @@
-import Image from "next/image";
+'use client';
+
+import dynamic from 'next/dynamic';
+import { CHARACTERS } from '@/lib/characters';
+import CharCard from '@/components/CharCard';
+import GroupChat from '@/components/GroupChat';
+
+const World = dynamic(() => import('@/components/World'), { ssr: false });
 
 export default function Home() {
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      {/* NAV */}
+      <nav>
+        <a className="logo" href="#">
+          <div className="logo-mark">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 4l5 8 5-8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 8h14" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity=".5"/>
+            </svg>
+          </div>
+          <span className="logo-text">Claude<span>Code</span> Team</span>
+        </a>
+      </nav>
+
+      {/* HERO */}
+      <section id="hero">
+        <div className="hero-bg">
+          <div className="grid-lines" />
+          <div className="hero-glow" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="hero-content">
+          <h1>나만의 Claude Code 캐릭터</h1>
+          <p className="hero-sub">캐릭터를 클릭하면 Claude Code를 간편하게 실행 할 수 있습니다.</p>
         </div>
-      </main>
-    </div>
+
+        <div id="world-section">
+          <div className="world-label">LIVE WORLD — 실시간으로 움직이는 캐릭터들</div>
+          <World />
+        </div>
+      </section>
+
+      {/* CHARACTER CARDS */}
+      <section id="chars" style={{ background: 'var(--bg2)', borderTop: '1px solid var(--border)', padding: '5rem 1.5rem' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div className="section-header">
+            <div className="section-tag">CHARACTERS</div>
+            <div className="section-title">세 명의 AI 개발자</div>
+          </div>
+          <div className="char-grid">
+            {CHARACTERS.map((c) => (
+              <CharCard key={c.id} char={c} selected={false} onClick={() => {}} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CHAT */}
+      <section id="chat-section" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div className="section-header" style={{ marginBottom: '2rem' }}>
+            <div className="section-tag">GROUP CHAT</div>
+            <div className="section-title">캐릭터 토론</div>
+            <p className="section-desc">토픽을 입력하면 세 캐릭터가 각자의 관점으로 토론합니다.</p>
+          </div>
+          <GroupChat />
+        </div>
+      </section>
+
+
+      {/* FOOTER */}
+      <footer>
+        <div className="footer-logo">Claude<span>Code</span> Team</div>
+        <p>Powered by Anthropic Claude API · Built with love for developers</p>
+      </footer>
+    </>
   );
 }
