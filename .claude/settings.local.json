@@ -2,7 +2,27 @@
   "permissions": {
     "allow": [
       "Skill(claude-api)",
-      "Bash(npx create-next-app@latest:*)"
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(where python:*)",
+      "Bash(node:*)",
+      "Bash(cmd:*)",
+      "Bash(npx next:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Read(//c/Users/Sungbeom/Desktop//**)",
+      "Read(//c/Users/Sungbeom/OneDrive/Desktop//**)",
+      "Bash(where claude:*)",
+      "Bash(netstat:*)",
+      "Bash(vercel link:*)",
+      "Bash(git:*)"
     ]
   }
 }
