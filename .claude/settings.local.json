@@ -22,7 +22,8 @@
       "Bash(where claude:*)",
       "Bash(netstat:*)",
       "Bash(vercel link:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(gh api:*)"
     ]
   }
 }
