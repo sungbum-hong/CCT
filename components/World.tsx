@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CHARACTERS } from '@/lib/characters';
+import { CHARACTERS, Character } from '@/lib/characters';
 
 interface WorldChar {
   id: string;
