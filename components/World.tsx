@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CHARACTERS, Character } from '@/lib/characters';
+import { CustomChar } from '@/lib/customChar';
 
 interface WorldChar {
   id: string;
@@ -10,7 +11,8 @@ interface WorldChar {
   zone: { min: number; max: number };
   ext: { min: number; max: number };
   quotes: string[];
-  char: Character;
+  char: Character | null;
+  customChar: CustomChar | null;
   x: number;
   tx: number;
   y: number;
@@ -22,11 +24,18 @@ interface WorldChar {
 const SPW = 48;
 const SPH = 80;
 
-export default function World() {
+interface WorldProps {
+  extraChars?: CustomChar[];
+}
+
+export default function World({ extraChars = [] }: WorldProps) {
   const worldRef = useRef<HTMLDivElement>(null);
-  const [toast, setToast] = useState(false);
+  const [toast, setToast] = useState('');
   const stateRef = useRef<WorldChar[]>([]);
   const rafRef = useRef<number>(0);
+  const extraCharsRef = useRef<CustomChar[]>(extraChars);
+  extraCharsRef.current = extraChars; // 항상 최신값 유지
+  const extraKey = extraChars.map(c => c.id).join(',');
 
   useEffect(() => {
     const el = worldRef.current;
@@ -35,11 +44,25 @@ export default function World() {
     let ww = el.offsetWidth;
     let wh = el.offsetHeight;
 
-    const wchars: WorldChar[] = [
-      { id: 'haiku', label: 'CDY', speed: 2.8, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[0].quotes, char: CHARACTERS[0], x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
-      { id: 'sonnet', label: 'CPD', speed: 1.5, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[1].quotes, char: CHARACTERS[1], x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
-      { id: 'opus', label: 'CCT', speed: 0.85, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[2].quotes, char: CHARACTERS[2], x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
+    const baseChars: WorldChar[] = [
+      { id: 'haiku', label: 'CDY', speed: 2.8, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[0].quotes, char: CHARACTERS[0], customChar: null, x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
+      { id: 'sonnet', label: 'CPD', speed: 1.5, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[1].quotes, char: CHARACTERS[1], customChar: null, x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
+      { id: 'opus', label: 'CCT', speed: 0.85, zone: { min: 0.02, max: 0.98 }, ext: { min: 0.02, max: 0.98 }, quotes: CHARACTERS[2].quotes, char: CHARACTERS[2], customChar: null, x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false },
     ];
+
+    const customWorldChars: WorldChar[] = extraChars.map((cc) => ({
+      id: cc.id,
+      label: cc.name,
+      speed: 1.0 + Math.random() * 1.5,
+      zone: { min: 0.02, max: 0.98 },
+      ext: { min: 0.02, max: 0.98 },
+      quotes: cc.quotes,
+      char: null,
+      customChar: cc,
+      x: 0, tx: 0, y: 0, ty: 0, wait: 0, left: false,
+    }));
+
+    const wchars: WorldChar[] = [...baseChars, ...customWorldChars];
     stateRef.current = wchars;
 
     // Create sprite elements
@@ -49,17 +72,44 @@ export default function World() {
     wchars.forEach((c, i) => {
       const d = document.createElement('div');
       d.className = 'spr';
-      const smallSvg = CHARACTERS[i].svg
-        .replace(svgSizes[i], 'width="48"')
-        .replace(/height="\d+"/, '');
-      d.innerHTML = smallSvg + `<div class="snm">${c.label}</div>`;
+
+      let smallSvg: string;
+      if (c.char) {
+        // Built-in character — use existing size replacement
+        smallSvg = c.char.svg
+          .replace(svgSizes[i] ?? svgSizes[0], 'width="48"')
+          .replace(/height="\d+"/, '');
+      } else if (c.customChar) {
+        // Custom character — just shrink SVG
+        smallSvg = c.customChar.svg
+          .replace(/width="\d+"/, 'width="40"')
+          .replace(/height="\d+"/, 'height="60"');
+      } else {
+        smallSvg = '';
+      }
+
+      const charColor = c.char ? c.char.dotColor : c.customChar?.color ?? '#ffffff';
+      d.innerHTML = smallSvg + `<div class="snm" style="color:${charColor}88">${c.label}</div>`;
+      d.style.filter = `drop-shadow(0 4px 8px ${charColor}55)`;
       d.addEventListener('click', (e) => {
         e.stopPropagation();
-        const project = c.id === 'sonnet' ? 'cpd' : c.id === 'haiku' ? 'cdy' : 'cct';
-        fetch('/api/launch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ characterId: c.id, ...(project && { project }) }) }).then(() => {
-          setToast(true);
-          setTimeout(() => setToast(false), 3000);
-        });
+        if (c.char) {
+          const project = c.id === 'sonnet' ? 'cpd' : c.id === 'haiku' ? 'cdy' : 'cct';
+          fetch('/api/launch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ characterId: c.id, project }) }).then(() => {
+            setToast(project.toUpperCase());
+            setTimeout(() => setToast(''), 3000);
+          });
+        } else if (c.customChar) {
+          const latest = extraCharsRef.current.find(x => x.id === c.customChar!.id);
+          const path = latest?.projectPath || c.customChar.projectPath;
+          if (!path) return;
+          fetch('/api/launch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectPath: path }) })
+            .then(r => r.json())
+            .then((data) => {
+              setToast(data.dir ?? c.customChar!.name);
+              setTimeout(() => setToast(''), 4000);
+            });
+        }
       });
       el.appendChild(d);
       sprites.push(d);
@@ -133,18 +183,29 @@ export default function World() {
       window.removeEventListener('resize', onResize);
       sprites.forEach((s) => s.remove());
     };
-  }, []);
+  }, [extraKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const total = CHARACTERS.length + extraChars.length;
+  const zoneWidth = 100 / total;
+  const allCharColors = [...CHARACTERS.map(c => c.dotColor), ...extraChars.map(c => c.color)];
+  const allLabels = ['CDY', 'CPD', 'CCT', ...extraChars.map(c => c.name)];
 
   return (
     <div id="world" ref={worldRef}>
-      <div className="zone" style={{ left: 0, width: '31%', background: '#050d18' }} />
-      <div className="zone" style={{ left: '31%', width: '38%', background: '#07090e' }} />
-      <div className="zone" style={{ right: 0, width: '31%', background: '#0d0802' }} />
-      <div className="dv" style={{ left: '31%' }} />
-      <div className="dv" style={{ left: '69%' }} />
-      <div className="zlb" style={{ left: '15.5%', transform: 'translateX(-50%)' }}>CDY</div>
-      <div className="zlb" style={{ left: '50%', transform: 'translateX(-50%)' }}>CPD</div>
-      <div className="zlb" style={{ left: '84.5%', transform: 'translateX(-50%)' }}>CCT</div>
+      {Array.from({ length: total }, (_, i) => (
+        <div key={i} className="zone" style={{
+          left: `${i * zoneWidth}%`,
+          width: `${zoneWidth}%`,
+          background: `linear-gradient(to bottom, transparent 0%, ${allCharColors[i]}12 40%, ${allCharColors[i]}2E 100%)`,
+          boxShadow: `inset 0 -2px 24px ${allCharColors[i]}22`,
+        }} />
+      ))}
+      {Array.from({ length: total - 1 }, (_, i) => (
+        <div key={i} className="dv" style={{ left: `${(i + 1) * zoneWidth}%` }} />
+      ))}
+      {allLabels.slice(0, total).map((label, i) => (
+        <div key={i} className="zlb" style={{ left: `${(i + 0.5) * zoneWidth}%`, transform: 'translateX(-50%)' }}>{label}</div>
+      ))}
 
 
 
@@ -274,7 +335,7 @@ export default function World() {
 
 {toast && (
         <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', background: '#1a2a1a', border: '1px solid #3a7a3a', color: '#63C175', padding: '8px 18px', borderRadius: 8, fontFamily: 'var(--mono)', fontSize: 12, zIndex: 100, pointerEvents: 'none' }}>
-          실행됐어요! ✓
+          [{toast}] 실행됐어요! ✓
         </div>
       )}
     </div>
